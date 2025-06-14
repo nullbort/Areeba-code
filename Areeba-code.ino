@@ -4,9 +4,9 @@
 #include <avr/interrupt.h>      // Interrupt handling functions
 
 // Define pins for LEDs, buzzer, and button
-const uint8_t ledPins[5] = {0, 1, 2, 3, 4};  // 5 LEDs connected to these pins
+const uint8_t ledPins[3] = {0, 2, 3};         // 3 LEDs connected to these pins
 const uint8_t buzzerPin = 1;                  // Buzzer connected to pin 1
-const uint8_t buttonPin = 5;                  // Button connected to pin 5
+const uint8_t buttonPin = 4;                  // Button moved to pin 4
 
 // Songs stored as RTTTL strings in program memory (PROGMEM saves RAM)
 const char tune1[] PROGMEM = "ShonarBangla:d=4,o=5,b=100:g,e,f,g,a,b,2c6,8b,8a,g,f,e,d,2e,4g,4a,4b,2c6,8b,a,g,f,e,d,c,2b,4a,4g,8f,8e,8d,2c,4d,4e,g,e,f,g,a,b,2c6,4b,4a,4g,4f,2e";
@@ -28,7 +28,7 @@ const unsigned long longPressThreshold = 1500; // Time to consider press a long 
 
 void setup() {
   // Set each LED pin as output so we can turn them on/off
-  for (uint8_t i = 0; i < 5; i++) {
+  for (uint8_t i = 0; i < 3; i++) {
     pinMode(ledPins[i], OUTPUT);
   }
 
@@ -37,7 +37,7 @@ void setup() {
 
   // Enable pin change interrupt for the button pin (to wake from sleep)
   GIMSK |= (1 << PCIE);     // Enable pin change interrupts
-  PCMSK |= (1 << PCINT5);   // Enable interrupt for button pin (PCINT5)
+  PCMSK |= (1 << PCINT4);   // Enable interrupt for button pin (PCINT4)
   sei();                   // Enable global interrupts
 
   randomSeed(analogRead(0)); // Seed random number generator with analog noise for randomness
@@ -156,7 +156,7 @@ void playRTTTL(const char *p) {
 
 // Smoothly fade LED on and off to match the beat duration
 void beatPulse(uint8_t ledIndex, int duration) {
-  for (int i = 0; i < 5; i++) analogWrite(ledPins[i], 0);  // Turn all LEDs off
+  for (int i = 0; i < 4; i++) analogWrite(ledPins[i], 0);  // Turn all LEDs off
 
   // Fade LED brightness up
   for (int i = 0; i < duration / 2; i += 5) {
@@ -178,8 +178,7 @@ uint8_t getLedIndex(int freq) {
   if (freq <= 300) return 0;
   if (freq <= 450) return 1;
   if (freq <= 600) return 2;
-  if (freq <= 800) return 3;
-  return 4;
+  return 3;
 }
 
 // Calculate the frequency of a note given its note number and octave
@@ -191,7 +190,7 @@ int noteFreq(int note, int octave) {
 
 // Turn off all LEDs by setting brightness to zero
 void clearLeds() {
-  for (uint8_t i = 0; i < 5; i++) {
+  for (uint8_t i = 0; i < 4; i++) {
     analogWrite(ledPins[i], 0);
   }
 }
