@@ -3,12 +3,12 @@
 #include <avr/sleep.h>
 #include <avr/interrupt.h>
 
-// Pin setup
-const uint8_t ledPins[5] = {0, 1, 2, 3, 4};
-const uint8_t buzzerPin = 1;
-const uint8_t buttonPin = 5;
+// Pin setup for 5 LEDs, 1 buzzer, and 1 button
+const uint8_t ledPins[5] = {0, 1, 2, 3, 4}; // LEDs connected to these pins
+const uint8_t buzzerPin = 1; // Shared with one LED (note: resource sharing)
+const uint8_t buttonPin = 5; // Button connected here
 
-// Extended RTTTL melodies
+// Songs stored in memory in a ringtone-like format (RTTTL)
 const char tune1[] PROGMEM = 
   "ShonarBangla:d=4,o=5,b=100:"
   "g,e,f,g,a,b,2c6,8b,8a,g,f,e,d,2e,"
@@ -44,15 +44,18 @@ const char tune5[] PROGMEM =
   "d,d,e,f,g,a,b,c6,2b,4a,4g,4f,4e,"
   "e,g,a,b,c6,d6,e6,f6,g6,2a6";
 
+// List of all tunes
 const char* const tunes[] PROGMEM = {tune1, tune2, tune3, tune4, tune5};
 const uint8_t tuneCount = sizeof(tunes) / sizeof(tunes[0]);
 
+// For button press timing and behavior
 unsigned long lastButtonDown = 0;
 bool buttonHeld = false;
 uint8_t nextTuneIndex = 0;
 const unsigned long debounceDelay = 50;
-const unsigned long longPressThreshold = 1500; // 1.5 seconds
+const unsigned long longPressThreshold = 1500;
 
+// Setup function runs once
 void setup() {
   for (uint8_t i = 0; i < 5; i++) {
     pinMode(ledPins[i], OUTPUT);
@@ -68,6 +71,7 @@ void setup() {
   randomSeed(analogRead(0));
 }
 
+// Main loop
 void loop() {
   static bool wasPressed = false;
   bool isPressed = (digitalRead(buttonPin) == LOW);
@@ -93,6 +97,7 @@ void loop() {
   enterSleep();
 }
 
+// Sleep mode
 void enterSleep() {
   set_sleep_mode(SLEEP_MODE_PWR_DOWN);
   sleep_enable();
@@ -101,16 +106,17 @@ void enterSleep() {
   sleep_disable();
 }
 
-ISR(PCINT0_vect) {
-  // Wake up ISR
-}
+// Wake from button interrupt
+ISR(PCINT0_vect) {}
 
+// Read a tune from program memory
 const char* readProgmemTune(uint8_t index) {
   static char buffer[128];
   strcpy_P(buffer, (PGM_P)pgm_read_word(&(tunes[index])));
   return buffer;
 }
 
+// Play RTTTL
 void playRTTTL(const char *p) {
   while (*p != ':') p++; p++;
   while (*p != ':') p++; p++;
@@ -157,6 +163,7 @@ void playRTTTL(const char *p) {
   clearLeds();
 }
 
+// LED fade effect
 void beatPulse(uint8_t ledIndex, int duration) {
   const int steps = 20;
   int halfDur = duration / 2;
@@ -176,6 +183,7 @@ void beatPulse(uint8_t ledIndex, int duration) {
   analogWrite(ledPins[ledIndex], 0);
 }
 
+// Choose LED based on note frequency
 uint8_t getLedIndex(int freq) {
   if (freq <= 300) return 0;
   if (freq <= 450) return 1;
@@ -184,12 +192,14 @@ uint8_t getLedIndex(int freq) {
   return 4;
 }
 
+// Convert note/octave to frequency
 int noteFreq(int note, int octave) {
   static const float A4 = 440.0;
   int n = (octave - 4) * 12 + note - 10;
   return (int)(A4 * pow(2.0, n / 12.0));
 }
 
+// Turn off all LEDs
 void clearLeds() {
   for (uint8_t i = 0; i < 5; i++) {
     analogWrite(ledPins[i], 0);
