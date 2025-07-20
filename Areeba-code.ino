@@ -1,3 +1,9 @@
+/*
+  Areeba
+
+  by Chris Ritchie - 06/14/2025
+*/
+
 #include <rtttl.h>
 #include <avr/sleep.h>
 #include <avr/interrupt.h>
